@@ -1,0 +1,22 @@
+<configuration default="false" name="Bilan Extractor With Options" type="PythonConfigurationType" factoryName="Python">
+  <module name="FinanceAgents" />
+  <option name="INTERPRETER_OPTIONS" value="" />
+  <option name="PARENT_ENVS" value="true" />
+  <envs>
+    <env name="PYTHONUNBUFFERED" value="1" />
+  </envs>
+  <option name="SDK_HOME" value="" />
+  <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+  <option name="IS_MODULE_SDK" value="true" />
+  <!-- Please select a valid Python interpreter in Edit Configurations... -->
+  <option name="ADD_CONTENT_ROOTS" value="true" />
+  <option name="ADD_SOURCE_ROOTS" value="true" />
+  <option name="SCRIPT_NAME" value="$PROJECT_DIR$/bilan_extractor/main.py" />
+  <option name="PARAMETERS" value="&quot;$PROJECT_DIR$/test.pdf&quot; --model gemma3 --output &quot;$PROJECT_DIR$/output/resultats.json&quot; --verbose" />
+  <option name="SHOW_COMMAND_LINE" value="false" />
+  <option name="EMULATE_TERMINAL" value="false" />
+  <option name="MODULE_MODE" value="false" />
+  <option name="REDIRECT_INPUT" value="false" />
+  <option name="INPUT_FILE" value="" />
+  <method v="2" />
+</configuration>
