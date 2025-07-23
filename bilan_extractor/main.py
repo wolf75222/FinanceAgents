@@ -43,6 +43,9 @@ def main():
     parser.add_argument("--model", help="Ollama model to use", default=None)
     parser.add_argument("--output", help="Path to save the output JSON", default=None)
     parser.add_argument("--markdown", help="Path to save the intermediate Markdown", default=None)
+    parser.add_argument("--year", type=int, help="Specific year to extract values for", default=None)
+    parser.add_argument("--value-type", choices=["brut", "net", "amortissement"], 
+                        help="Type of value to extract (brut, net, amortissement)", default=None)
     parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
     
     args = parser.parse_args()
@@ -82,12 +85,29 @@ def main():
         else:
             markdown_text = docling.parse_to_markdown(str(filepath))
         
+        # Print the Markdown content in verbose mode
+        if args.verbose:
+            print("\n--- Markdown Content from PDF ---\n")
+            print(markdown_text)
+            print("\n--- End of Markdown Content ---\n")
+        
         # Extract variables using Ollama
         logger.info("Extracting financial variables...")
         ollama_client = OllamaClient(default_model=config["ollama"]["default_model"])
         model = args.model or config["ollama"]["default_model"]
         
-        json_str = ollama_client.extract_financial_variables(markdown_text, model)
+        # Log extraction parameters
+        if args.year:
+            logger.info(f"Extracting values for year: {args.year}")
+        if args.value_type:
+            logger.info(f"Extracting values of type: {args.value_type}")
+        
+        json_str = ollama_client.extract_financial_variables(
+            markdown_text, 
+            model=model,
+            year=args.year,
+            value_type=args.value_type
+        )
         
         # Parse and validate the output
         logger.info("Parsing and validating output...")

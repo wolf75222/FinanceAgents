@@ -1,0 +1,48 @@
+{
+  "default_variables": [
+    {
+      "name": "actif_total",
+      "aliases": ["actiftotal", "actif total", "total actif", "total de l'actif"],
+      "description": "Total des actifs"
+    },
+    {
+      "name": "passif_total",
+      "aliases": ["passiftotal", "passif total", "total passif", "total du passif"],
+      "description": "Total des passifs"
+    },
+    {
+      "name": "capitaux_propres",
+      "aliases": ["capitauxpropres", "capitaux propres", "total capitaux propres"],
+      "description": "Capitaux propres"
+    },
+    {
+      "name": "resultat_net",
+      "aliases": ["résultat_net", "résultatnet", "resultatnet", "résultat net", "resultat net"],
+      "description": "Résultat net de l'exercice"
+    },
+    {
+      "name": "chiffre_affaires",
+      "aliases": ["chiffreaffaires", "chiffre affaires", "chiffre d'affaires"],
+      "description": "Chiffre d'affaires"
+    },
+    {
+      "name": "dettes",
+      "aliases": ["dette", "total dettes"],
+      "description": "Total des dettes"
+    }
+  ],
+  "additional_variables": [
+    {
+      "name": "2154220_mat_ind_subv_bioclad_2012",
+      "code": "2154220",
+      "aliases": ["MAT IND SUBV BIOCLAD 2012", "2154220 MAT IND SUBV BIOCLAD 2012"],
+      "description": "Matériel industriel subventionné BIOCLAD 2012"
+    },
+    {
+      "name": "2818300_amort_mat_bureau_inform",
+      "code": "2818300",
+      "aliases": ["AMORT/MAT BUREAU ET INFORM", "2818300 AMORT/MAT BUREAU ET INFORM"],
+      "description": "Amortissements sur matériel de bureau et informatique"
+    }
+  ]
+}

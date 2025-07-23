@@ -7,9 +7,14 @@ Un outil pour extraire automatiquement les variables financières des bilans com
 - Lecture de fichiers au format PDF
 - Conversion vers Markdown via Docling
 - Extraction des variables financières via LLM (Ollama + Gemma 3B)
+- Extraction de différents types de valeurs (brut, net, amortissement)
+- Extraction de valeurs pour des années spécifiques
+- Configuration flexible des variables à extraire via JSON
 - Sortie au format JSON
 
 ## Variables extraites
+
+Par défaut, les variables financières suivantes sont extraites :
 
 - Actif total
 - Passif total
@@ -17,6 +22,19 @@ Un outil pour extraire automatiquement les variables financières des bilans com
 - Résultat net
 - Chiffre d'affaires
 - Dettes
+
+Mais l'outil peut désormais extraire n'importe quelle variable financière définie dans le fichier de configuration `bilan_extractor/config/variables.json`, y compris des variables spécifiques avec des codes comptables comme :
+
+- 2154220 MAT IND SUBV BIOCLAD 2012
+- 2818300 AMORT/MAT BUREAU ET INFORM
+- Et bien d'autres...
+
+Pour chaque variable, l'outil peut extraire différents types de valeurs :
+- Valeur brute (avant amortissements et provisions)
+- Valeur nette (après amortissements et provisions)
+- Valeur des amortissements et provisions
+
+L'outil peut également extraire les valeurs pour une année spécifique.
 
 ## Installation
 
@@ -47,7 +65,21 @@ Options disponibles:
 - `--model` : Modèle Ollama à utiliser (par défaut: gemma3)
 - `--output` : Chemin pour sauvegarder la sortie JSON
 - `--markdown` : Chemin pour sauvegarder le Markdown intermédiaire
+- `--year` : Année spécifique pour laquelle extraire les valeurs (ex: 2023)
+- `--value-type` : Type de valeur à extraire (choix: brut, net, amortissement)
 - `--verbose` : Activer la sortie détaillée
+
+Exemples:
+```bash
+# Extraire toutes les variables avec toutes les valeurs disponibles
+python -m bilan_extractor.main chemin_vers_fichier.pdf
+
+# Extraire uniquement les valeurs nettes pour l'année 2023
+python -m bilan_extractor.main chemin_vers_fichier.pdf --year 2023 --value-type net
+
+# Extraire uniquement les valeurs brutes et sauvegarder le résultat
+python -m bilan_extractor.main chemin_vers_fichier.pdf --value-type brut --output resultats.json
+```
 
 ### Variables d'environnement
 
@@ -71,6 +103,12 @@ Des configurations de lancement PyCharm sont incluses dans le projet pour facili
    - Sortie JSON : sauvegardée dans le dossier `output` du projet
    - Mode verbose activé
 
+3. **Bilan Extractor Year and Value Type** : Configuration pour extraire des valeurs spécifiques
+   - Chemin du fichier PDF : `C:\Users\romai\Documents\test.pdf`
+   - Année : `2023` (extrait uniquement les valeurs pour cette année)
+   - Type de valeur : `net` (extrait uniquement les valeurs nettes)
+   - Sortie JSON : sauvegardée dans le dossier `output` du projet
+
 Pour utiliser ces configurations :
 1. Ouvrez le projet dans PyCharm
 2. Sélectionnez la configuration souhaitée dans le menu déroulant en haut à droite
@@ -89,6 +127,8 @@ Pour modifier une configuration :
 
 ### Exemple de sortie
 
+#### Format de sortie précédent (pour compatibilité)
+
 ```json
 {
   "actif_total": 542000,
@@ -100,6 +140,59 @@ Pour modifier une configuration :
 }
 ```
 
+#### Nouveau format de sortie (avec types de valeurs et années)
+
+```json
+{
+  "actif_total": {
+    "name": "actif_total",
+    "values": [
+      {
+        "value": 542000,
+        "value_type": "brut",
+        "year": 2023
+      },
+      {
+        "value": 520000,
+        "value_type": "net",
+        "year": 2023
+      }
+    ]
+  },
+  "passif_total": {
+    "name": "passif_total",
+    "values": [
+      {
+        "value": 478000,
+        "value_type": "net",
+        "year": 2023
+      }
+    ]
+  },
+  "2154220_mat_ind_subv_bioclad_2012": {
+    "name": "2154220_mat_ind_subv_bioclad_2012",
+    "code": "2154220",
+    "values": [
+      {
+        "value": 50000,
+        "value_type": "brut",
+        "year": 2023
+      },
+      {
+        "value": 20000,
+        "value_type": "amortissement",
+        "year": 2023
+      },
+      {
+        "value": 30000,
+        "value_type": "net",
+        "year": 2023
+      }
+    ]
+  }
+}
+```
+
 ## Structure du projet
 
 ```
@@ -108,7 +201,8 @@ bilan_extractor/
 ├── main.py                    # Point d'entrée principal
 │
 ├── config/
-│   └── settings.py            # Configuration générale
+│   ├── settings.py            # Configuration générale
+│   └── variables.json         # Configuration des variables à extraire
 │
 ├── core/                      # Cœur métier
 │   ├── converter.py           # Conversion PDF → Markdown
@@ -127,6 +221,71 @@ bilan_extractor/
 │   └── logger.py              # Gestion du logging
 │
 └── tests/                     # Tests unitaires
+```
+
+## Configuration des variables à extraire
+
+L'outil utilise un fichier de configuration JSON pour définir les variables à extraire. Ce fichier se trouve à l'emplacement `bilan_extractor/config/variables.json`.
+
+### Structure du fichier de configuration
+
+```
+{
+  "default_variables": [
+    {
+      "name": "actif_total",
+      "aliases": ["actiftotal", "actif total", "total actif", "total de l'actif"],
+      "description": "Total des actifs"
+    },
+    {
+      "name": "passif_total",
+      "aliases": ["passiftotal", "passif total", "total passif", "total du passif"],
+      "description": "Total des passifs"
+    }
+  ],
+  "additional_variables": [
+    {
+      "name": "2154220_mat_ind_subv_bioclad_2012",
+      "code": "2154220",
+      "aliases": ["MAT IND SUBV BIOCLAD 2012", "2154220 MAT IND SUBV BIOCLAD 2012"],
+      "description": "Matériel industriel subventionné BIOCLAD 2012"
+    },
+    {
+      "name": "2818300_amort_mat_bureau_inform",
+      "code": "2818300",
+      "aliases": ["AMORT/MAT BUREAU ET INFORM", "2818300 AMORT/MAT BUREAU ET INFORM"],
+      "description": "Amortissements sur matériel de bureau et informatique"
+    }
+  ]
+}
+```
+
+> **Note**: Vous pouvez ajouter autant de variables que nécessaire dans les sections `default_variables` et `additional_variables`.
+
+### Champs disponibles
+
+Pour chaque variable :
+- `name` (obligatoire) : Identifiant unique de la variable (utilisé dans la sortie JSON)
+- `aliases` (recommandé) : Liste des noms alternatifs qui peuvent apparaître dans le bilan
+- `code` (optionnel) : Code comptable associé à la variable
+- `description` (optionnel) : Description de la variable
+
+### Comment ajouter une nouvelle variable
+
+Pour ajouter une nouvelle variable à extraire :
+
+1. Ouvrez le fichier `bilan_extractor/config/variables.json`
+2. Ajoutez une nouvelle entrée dans la section `additional_variables`
+3. Définissez au minimum le champ `name` et idéalement les champs `aliases` pour améliorer la détection
+4. Sauvegardez le fichier
+
+Exemple d'ajout d'une nouvelle variable :
+```json
+{
+  "name": "immobilisations_corporelles",
+  "aliases": ["immobilisations corporelles", "total immobilisations corporelles"],
+  "description": "Total des immobilisations corporelles"
+}
 ```
 
 ## Extensions possibles

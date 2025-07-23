@@ -24,15 +24,7 @@ def parse_llm_output(json_str: str) -> Dict[str, Any]:
     """
     # Check if input is empty or whitespace-only
     if not json_str or json_str.isspace():
-        # Return empty dictionary with expected keys
-        return {
-            "actif_total": None,
-            "passif_total": None,
-            "capitaux_propres": None,
-            "résultat_net": None,
-            "chiffre_affaires": None,
-            "dettes": None
-        }
+        return {}
     
     # Try to parse the JSON directly
     try:
@@ -55,15 +47,8 @@ def parse_llm_output(json_str: str) -> Dict[str, Any]:
                 # If still fails, continue to fallback
                 pass
         
-        # If all extraction attempts fail, return empty dictionary with expected keys
-        return {
-            "actif_total": None,
-            "passif_total": None,
-            "capitaux_propres": None,
-            "résultat_net": None,
-            "chiffre_affaires": None,
-            "dettes": None
-        }
+        # If all extraction attempts fail, return empty dictionary
+        return {}
 
 
 def validate_financial_variables(data: Dict[str, Any]) -> Dict[str, Any]:
@@ -76,22 +61,58 @@ def validate_financial_variables(data: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         The validated dictionary with financial variables
     """
-    expected_keys = [
-        "actif_total", 
-        "passif_total", 
-        "capitaux_propres", 
-        "résultat_net", 
-        "chiffre_affaires", 
-        "dettes"
-    ]
-    
-    # Ensure all values are numeric
-    for key, value in data.items():
-        if key in expected_keys and value is not None:
+    # Process each variable
+    for var_name, var_data in list(data.items()):
+        # Skip if not a dictionary
+        if not isinstance(var_data, dict):
+            continue
+            
+        # Handle new format with values list
+        if "values" in var_data and isinstance(var_data["values"], list):
+            # Validate each value in the list
+            for i, value_data in enumerate(var_data["values"]):
+                if isinstance(value_data, dict) and "value" in value_data:
+                    try:
+                        # Convert value to float
+                        var_data["values"][i]["value"] = float(value_data["value"])
+                    except (ValueError, TypeError):
+                        # If conversion fails, remove this value
+                        var_data["values"][i]["value"] = None
+            
+            # Remove values with None
+            var_data["values"] = [v for v in var_data["values"] if v.get("value") is not None]
+            
+            # If no valid values, remove the variable
+            if not var_data["values"]:
+                del data[var_name]
+        
+        # Handle legacy format (direct value)
+        elif "values" not in var_data:
+            # Convert to new format
+            value = None
             try:
-                data[key] = float(value)
+                for key, val in var_data.items():
+                    if key not in ["name", "code", "description"] and val is not None:
+                        try:
+                            value = float(val)
+                            break
+                        except (ValueError, TypeError):
+                            pass
             except (ValueError, TypeError):
-                # If conversion fails, keep the original value
                 pass
+                
+            if value is not None:
+                # Create new format
+                data[var_name] = {
+                    "name": var_name,
+                    "values": [{"value": value, "value_type": "unspecified", "year": None}]
+                }
+                # Copy other fields
+                for key in ["code", "description"]:
+                    if key in var_data:
+                        data[var_name][key] = var_data[key]
+            else:
+                # No valid value, remove the variable
+                del data[var_name]
     
     return data
